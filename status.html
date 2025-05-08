@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>沙巴手工鱼丸面 - 订单状态</title>
+    <style>
+        body { 
+            font-family: Arial; 
+            padding: 10px; 
+            max-width: 800px; 
+            margin: 0 auto;
+        }
+        .status-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            border-left: 5px solid #2196F3;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .status-item.delivered {
+            border-left-color: #4CAF50;
+        }
+        .status-item.preparing {
+            border-left-color: #FFC107;
+        }
+        .status-table {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 1.1em;
+        }
+        .status-items {
+            font-size: 0.9em;
+            color: #555;
+            margin-bottom: 5px;
+        }
+        .status-time {
+            font-size: 0.8em;
+            color: #888;
+            margin-bottom: 10px;
+        }
+        .status-actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+        .status-btn {
+            padding: 5px 10px;
+            font-size: 0.9em;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .deliver-btn {
+            background: #4CAF50;
+            color: white;
+        }
+        .delete-btn {
+            background: #f44336;
+            color: white;
+        }
+        .status-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ddd;
+        }
+        .nav-btn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 10px 15px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .no-orders {
+            text-align: center;
+            color: #888;
+            margin-top: 50px;
+            font-size: 1.2em;
+        }
+        @media (max-width: 600px) {
+        .menu-item { 
+            width: 45%; /* 手机屏幕显示两列 */
+            margin: 2%;
+        }
+        button, .table-btn {
+            padding: 12px; /* 增大点击区域 */
+        }
+        }
+    </style>
+</head>
+<body>
+    <a href="order.html" class="nav-btn">返回点餐</a>
+    
+    <div class="status-title">订单状态管理</div>
+    <div id="status-container">
+        <!-- 订单状态将通过JS动态生成 -->
+    </div>
+
+    <script>
+        // 初始化数据
+        let activeOrders = [];
+        let orderElements = {}; // 用于保存订单元素的引用
+        
+        // 页面加载时初始化
+        window.onload = function() {
+            loadActiveOrders();
+            initializeStatusDisplay();
+            
+            // 每5秒自动刷新状态
+            setInterval(function() {
+                refreshOrders();
+            }, 5000);
+        };
+        
+        // 加载活动订单
+        function loadActiveOrders() {
+            const saved = localStorage.getItem('activeOrders');
+            if(saved) {
+                activeOrders = JSON.parse(saved);
+            }
+        }
+        
+        // 保存活动订单
+        function saveActiveOrders() {
+            localStorage.setItem('activeOrders', JSON.stringify(activeOrders));
+        }
+        
+        // 初始化状态显示
+        function initializeStatusDisplay() {
+            const container = document.getElementById('status-container');
+            container.innerHTML = '';
+            orderElements = {};
+            
+            if(activeOrders.length === 0) {
+                container.innerHTML = '<div class="no-orders">暂无进行中的订单</div>';
+                return;
+            }
+            
+            // 按添加顺序显示（新订单在前）
+            activeOrders.forEach(order => {
+                const orderElement = createOrderElement(order);
+                container.appendChild(orderElement);
+                orderElements[order.id] = orderElement;
+            });
+        }
+        
+        // 刷新订单状态
+        function refreshOrders() {
+            const oldOrderIds = Object.keys(orderElements);
+            loadActiveOrders();
+            
+            const container = document.getElementById('status-container');
+            
+            // 检查是否有新订单
+            activeOrders.forEach(order => {
+                if(!orderElements[order.id]) {
+                    // 新订单，添加到最前面
+                    const orderElement = createOrderElement(order);
+                    container.insertBefore(orderElement, container.firstChild);
+                    orderElements[order.id] = orderElement;
+                } else {
+                    // 更新现有订单状态
+                    updateOrderElement(orderElements[order.id], order);
+                }
+            });
+            
+            // 检查是否有已删除的订单
+            oldOrderIds.forEach(id => {
+                if(!activeOrders.some(o => o.id == id)) {
+                    const element = orderElements[id];
+                    if(element && element.parentNode) {
+                        container.removeChild(element);
+                    }
+                    delete orderElements[id];
+                }
+            });
+            
+            if(activeOrders.length === 0 && container.innerHTML.indexOf('no-orders') === -1) {
+                container.innerHTML = '<div class="no-orders">暂无进行中的订单</div>';
+            }
+        }
+        
+        // 创建订单元素
+        function createOrderElement(order) {
+            const orderElement = document.createElement('div');
+            orderElement.id = `order-${order.id}`;
+            orderElement.className = `status-item ${order.status}`;
+            
+            // 订单基本信息
+            let itemsText = order.items.map(item => 
+                `${item.name} ×${item.quantity || 1}`
+            ).join(', ');
+            
+            orderElement.innerHTML = `
+                <div class="status-table">桌号: ${order.table}</div>
+                <div class="status-items">${itemsText}</div>
+                <div class="status-time">下单时间: ${order.time}</div>
+                <div class="status-time">总价: RM${order.total.toFixed(2)}</div>
+                <div class="status-actions">
+                    ${order.status === 'preparing' ? 
+                        `<button class="status-btn deliver-btn" onclick="updateOrderStatus(${order.id}, 'delivered')">标记为已送达</button>` : 
+                        `<span style="color: #4CAF50; font-weight: bold;">✓ 已送达</span>`}
+                    <button class="status-btn delete-btn" onclick="removeActiveOrder(${order.id})">删除订单</button>
+                </div>
+            `;
+            
+            return orderElement;
+        }
+        
+        // 更新订单元素
+        function updateOrderElement(element, order) {
+            // 只更新状态变化的部分
+            if(!element.classList.contains(order.status)) {
+                element.className = `status-item ${order.status}`;
+                
+                const actionsDiv = element.querySelector('.status-actions');
+                if(actionsDiv) {
+                    actionsDiv.innerHTML = `
+                        ${order.status === 'preparing' ? 
+                            `<button class="status-btn deliver-btn" onclick="updateOrderStatus(${order.id}, 'delivered')">标记为已送达</button>` : 
+                            `<span style="color: #4CAF50; font-weight: bold;">✓ 已送达</span>`}
+                        <button class="status-btn delete-btn" onclick="removeActiveOrder(${order.id})">删除订单</button>
+                    `;
+                }
+            }
+        }
+        
+        // 更新订单状态
+        function updateOrderStatus(orderId, newStatus) {
+            const orderIndex = activeOrders.findIndex(o => o.id === orderId);
+            if(orderIndex >= 0) {
+                activeOrders[orderIndex].status = newStatus;
+                activeOrders[orderIndex].lastUpdated = Date.now();
+                saveActiveOrders();
+                
+                // 更新显示的订单状态
+                if(orderElements[orderId]) {
+                    updateOrderElement(orderElements[orderId], activeOrders[orderIndex]);
+                }
+            }
+        }
+        
+        // 从活动订单中移除
+        function removeActiveOrder(orderId) {
+            if(confirm('确定要删除此订单吗？')) {
+                activeOrders = activeOrders.filter(o => o.id !== orderId);
+                saveActiveOrders();
+                
+                // 从DOM中移除
+                const element = orderElements[orderId];
+                if(element && element.parentNode) {
+                    element.parentNode.removeChild(element);
+                }
+                delete orderElements[orderId];
+                
+                if(activeOrders.length === 0) {
+                    document.getElementById('status-container').innerHTML = '<div class="no-orders">暂无进行中的订单</div>';
+                }
+            }
+        }
+    </script>
+</body>
+</html>

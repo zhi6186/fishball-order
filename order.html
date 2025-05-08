@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>沙巴手工鱼丸面 - 点餐</title>
+    <style>
+        body { font-family: Arial; padding: 10px; max-width: 800px; margin: 0 auto; }
+        .menu-section { margin-bottom: 20px; }
+        .menu-category { 
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        #main-dishes {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr); /* 6列 */
+            grid-template-rows: repeat(4, auto);   /* 4行 */
+            gap: 10px; /* 项间距 */
+        }
+        .menu-item { 
+            width: 100%; /* 宽度填满网格单元格 */
+            text-align: center; 
+            padding: 10px; 
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            background: white;
+            box-sizing: border-box; /* 确保边框和内边距包含在宽度内 */
+        }
+        .menu-item:hover { background-color: #f0f0f0; }
+        .menu-item.selected {
+            background: #4CAF50;
+            color: white;
+        }
+        .order-list { 
+            margin-top: 20px; 
+            border-top: 2px solid #333; 
+            padding-top: 10px;
+        }
+        .stats { 
+            background: #f5f5f5; 
+            padding: 10px; 
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+        .table-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .table-btn {
+            padding: 10px 15px;
+            background: #e0e0e0;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .table-btn.selected {
+            background: #4CAF50;
+            color: white;
+        }
+        button {
+            padding: 10px 15px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #0b7dda;
+        }
+        #current-order li {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .current-main-item {
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        .addon-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 5px;
+        }
+        .addon-quantity {
+            margin: 0 10px;
+            font-weight: bold;
+            min-width: 20px;
+            text-align: center;
+        }
+        .quantity-btn {
+            width: 25px;
+            height: 25px;
+            padding: 0;
+            background: #ddd;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .quantity-btn:hover {
+            background: #ccc;
+        }
+        .addon-name {
+            margin-bottom: 5px;
+        }
+        .reset-btn {
+            background: #ff9800;
+        }
+        .reset-btn:hover {
+            background: #e68a00;
+        }
+        .nav-btn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+        #extra-noodle-indicator {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+        @media (max-width: 600px) {
+            #main-dishes {
+                grid-template-columns: repeat(2, 1fr); /* 手机屏幕显示2列 */
+            }
+        }
+    </style>
+    <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+    <a href="status.html" class="nav-btn">查看订单状态</a>
+    
+    <h1>沙巴手工鱼丸面</h1>
+    
+    <div>
+        <h2>选择桌号</h2>
+        <div class="table-buttons" id="table-buttons">
+            <!-- 桌号按钮将通过JS动态生成 -->
+        </div>
+    </div>
+    
+    <div class="menu-section">
+        <div class="menu-category">
+            <h2>选择主菜</h2>
+            <div id="main-dishes">
+                <div class="menu-item" onclick="selectMainDish('全鱼丸面汤', 7.50)">
+                    <div>全鱼丸面汤</div>
+                    <div>RM7.50</div>
+                </div>
+                <div class="menu-item" onclick="selectMainDish('全鱼丸面干', 7.50)">
+                    <div>全鱼丸面干</div>
+                    <div>RM7.50</div>
+                </div>
+                <div class="menu-item" onclick="selectMainDish('鱼丸面汤', 8.00)">
+                    <div>鱼丸面汤</div>
+                    <div>RM8.00</div>
+                </div>
+                <div class="menu-item" onclick="selectMainDish('鱼丸面干', 8.00)">
+                    <div>鱼丸面干</div>
+                    <div>RM8.00</div>
+                </div>
+                <div class="menu-item" onclick="selectMainDish('纯面汤', 3.00)">
+                    <div>纯面汤</div>
+                    <div>RM3.00</div>
+                </div>
+                <div class="menu-item" onclick="selectMainDish('纯面干', 3.00)">
+                    <div>纯面干</div>
+                    <div>RM3.00</div>
+                </div>
+                <div class="menu-item" onclick="selectMainDish('全鱼丸米粉汤', 7.50)">
+                    <div>全鱼丸米粉汤</div>
+                    <div>RM7.50</div>
+                </div>
+                <div class="menu-item" onclick="selectMainDish('全鱼丸米粉干', 7.50)">
+                    <div>全鱼丸米粉干</div>
+                    <div>RM7.50</div>
+                </div>
+                <div class="menu-item" onclick="selectMainDish('鱼丸米粉汤', 8.00)">
+                    <div>鱼丸米粉汤</div>
+                    <div>RM8.00</div>
+                </div>
+                <div class="menu-item" onclick="selectMainDish('鱼丸米粉干', 8.00)">
+                    <div>鱼丸米粉干</div>
+                    <div>RM8.00</div>
+                </div>
+                <div class="menu-item" onclick="selectMainDish('纯米粉汤', 3.00)">
+                    <div>纯米粉汤</div>
+                    <div>RM3.00</div>
+                </div>
+                <div class="menu-item" onclick="selectMainDish('纯米粉干', 3.00)">
+                    <div>纯米粉干</div>
+                    <div>RM3.00</div>
+                </div>
+                <div class="menu-item" onclick="selectMainDish('全鱼丸果条汤', 7.50)">
+                    <div>全鱼丸果条汤</div>
+                    <div>RM7.50</div>
+                </div>
+                <div class="menu-item" onclick="selectMainDish('全鱼丸果条干', 7.50)">
+                    <div>全鱼丸果条干</div>
+                    <div>RM7.50</div>
+                </div>
+                <div class="menu-item" onclick="selectMainDish('鱼丸果条汤', 8.00)">
+                    <div>鱼丸果条汤</div>
+                    <div>RM8.00</div>
+                </div>
+                <div class="menu-item" onclick="selectMainDish('鱼丸果条干', 8.00)">
+                    <div>鱼丸果条干</div>
+                    <div>RM8.00</div>
+                </div>
+                <div class="menu-item" onclick="selectMainDish('纯果条汤', 3.00)">
+                    <div>纯果条汤</div>
+                    <div>RM3.00</div>
+                </div>
+                <div class="menu-item" onclick="selectMainDish('纯果条干', 3.00)">
+                    <div>纯果条干</div>
+                    <div>RM3.00</div>
+                </div>
+                <div class="menu-item" onclick="selectMainDish('全鱼丸老鼠粉汤', 7.50)">
+                    <div>全鱼丸老鼠粉汤</div>
+                    <div>RM7.50</div>
+                </div>
+                <div class="menu-item" onclick="selectMainDish('全鱼丸老鼠粉干', 7.50)">
+                    <div>全鱼丸老鼠粉干</div>
+                    <div>RM7.50</div>
+                </div>
+                <div class="menu-item" onclick="selectMainDish('鱼丸老鼠粉汤', 8.00)">
+                    <div>鱼丸老鼠粉汤</div>
+                    <div>RM8.00</div>
+                </div>
+                <div class="menu-item" onclick="selectMainDish('鱼丸老鼠粉干', 8.00)">
+                    <div>鱼丸老鼠粉干</div>
+                    <div>RM8.00</div>
+                </div>
+                <div class="menu-item" onclick="selectMainDish('纯老鼠粉汤', 3.00)">
+                    <div>纯老鼠粉汤</div>
+                    <div>RM3.00</div>
+                </div>
+                <div class="menu-item" onclick="selectMainDish('纯老鼠粉干', 3.00)">
+                    <div>纯老鼠粉干</div>
+                    <div>RM3.00</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="menu-category">
+            <h2>选择加料</h2>
+            <div id="addons">
+                <div class="menu-item">
+                    <div class="addon-name">豆腐 RM1.50</div>
+                    <div class="addon-controls">
+                        <button class="quantity-btn" onclick="changeAddonQuantity('豆腐', -1)">-</button>
+                        <span class="addon-quantity" id="quantity-豆腐">0</span>
+                        <button class="quantity-btn" onclick="changeAddonQuantity('豆腐', 1)">+</button>
+                    </div>
+                </div>
+                <div class="menu-item">
+                    <div class="addon-name">豆腐卜 RM1.00</div>
+                    <div class="addon-controls">
+                        <button class="quantity-btn" onclick="changeAddonQuantity('豆腐卜', -1)">-</button>
+                        <span class="addon-quantity" id="quantity-豆腐卜">0</span>
+                        <button class="quantity-btn" onclick="changeAddonQuantity('豆腐卜', 1)">+</button>
+                    </div>
+                </div>
+                <div class="menu-item">
+                    <div class="addon-name">鱼丸 RM1.00</div>
+                    <div class="addon-controls">
+                        <button class="quantity-btn" onclick="changeAddonQuantity('鱼丸', -1)">-</button>
+                        <span class="addon-quantity" id="quantity-鱼丸">0</span>
+                        <button class="quantity-btn" onclick="changeAddonQuantity('鱼丸', 1)">+</button>
+                    </div>
+                </div>
+                <div class="menu-item" onclick="selectExtraNoodle()">
+                    <div>加面 RM1.00</div>
+                    <div id="extra-noodle-indicator">未选择</div>
+                </div>
+                <div class="menu-item reset-btn" onclick="resetAddonQuantities()">
+                    <div>重置所有加料</div>
+                </div>
+            </div>
+        </div>
+        
+        <button onclick="addCombinationToOrder()">添加到订单</button>
+    </div>
+    
+    <div class="order-list">
+        <h2>当前订单 (桌号: <span id="current-table">未选择</span>)</h2>
+        <ul id="current-order"></ul>
+        <div>总计: RM<span id="total">0.00</span></div>
+        <button onclick="submitOrder()">提交订单</button>
+        <button onclick="clearOrder()">清空当前</button>
+    </div>
+
+    <div class="stats">
+        <h2>今日营业</h2>
+        <div>订单数: <span id="order-count">0</span></div>
+        <div>营业额: RM<span id="today-revenue">0.00</span></div>
+        <button onclick="exportToExcel()">导出今日订单(Excel)</button>
+        <button onclick="resetDailyStats()">重置当日数据</button>
+    </div>
+
+    <script>
+        // 初始化数据
+        let currentOrder = [];
+        let selectedTable = null;
+        let dailyStats = { orderCount: 0, revenue: 0 };
+        let allOrders = [];
+        let activeOrders = [];
+        let extraNoodleSelected = false;
+        
+        // 当前选择的菜品和加料
+        let selectedMainDish = null;
+        
+        // 加料价格和数量
+        const addonPrices = {
+            '豆腐': 1.50,
+            '豆腐卜': 1.00,
+            '鱼丸': 1.00,
+            '加面': 1.00
+        };
+        
+        let addonQuantities = {
+            '豆腐': 0,
+            '豆腐卜': 0,
+            '鱼丸': 0
+        };
+        
+        // 桌号配置
+        const tables = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10','11','12','13','14','15','16','17','18','19','20'];
+        
+        // 页面加载时初始化
+        window.onload = function() {
+            initTableButtons();
+            loadDailyStats();
+            loadAllOrders();
+            loadActiveOrders();
+        };
+        
+        // 初始化桌号按钮
+        function initTableButtons() {
+            const container = document.getElementById('table-buttons');
+            tables.forEach(table => {
+                const btn = document.createElement('button');
+                btn.className = 'table-btn';
+                btn.textContent = table;
+                btn.onclick = function() {
+                    selectTable(table);
+                };
+                container.appendChild(btn);
+            });
+        }
+        
+        // 选择桌号
+        function selectTable(table) {
+            selectedTable = table;
+            document.getElementById('current-table').textContent = table;
+            
+            // 更新按钮样式
+            const buttons = document.querySelectorAll('.table-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('selected');
+                if(btn.textContent === table) {
+                    btn.classList.add('selected');
+                }
+            });
+        }
+        
+        // 选择主菜
+        function selectMainDish(name, price) {
+            // 清除之前的选择
+            const mainDishes = document.querySelectorAll('#main-dishes .menu-item');
+            mainDishes.forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            // 设置新选择
+            selectedMainDish = { name, price };
+            
+            // 高亮显示
+            event.currentTarget.classList.add('selected');
+        }
+        
+        // 选择加面
+        function selectExtraNoodle() {
+            extraNoodleSelected = !extraNoodleSelected;
+            const indicator = document.getElementById('extra-noodle-indicator');
+            
+            if(extraNoodleSelected) {
+                indicator.textContent = "已选择";
+                indicator.style.color = "#4CAF50";
+                event.currentTarget.classList.add('selected');
+            } else {
+                indicator.textContent = "未选择";
+                indicator.style.color = "#888";
+                event.currentTarget.classList.remove('selected');
+            }
+        }
+        
+        // 修改加料数量
+        function changeAddonQuantity(addonName, change) {
+            const newQuantity = addonQuantities[addonName] + change;
+            if(newQuantity >= 0) {
+                addonQuantities[addonName] = newQuantity;
+                document.getElementById(`quantity-${addonName}`).textContent = newQuantity;
+            }
+        }
+        
+        // 重置所有加料数量
+        function resetAddonQuantities() {
+            for(const addon in addonQuantities) {
+                addonQuantities[addon] = 0;
+                document.getElementById(`quantity-${addon}`).textContent = '0';
+            }
+            
+            // 重置加面选项
+            extraNoodleSelected = false;
+            document.getElementById('extra-noodle-indicator').textContent = "未选择";
+            document.getElementById('extra-noodle-indicator').style.color = "#888";
+            document.querySelectorAll('#addons .menu-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+        }
+        
+        // 将主菜和加料组合添加到订单
+        function addCombinationToOrder() {
+            if(!selectedTable) return alert('请先选择桌号');
+            if(!selectedMainDish) return alert('请选择主菜');
+            
+            // 获取实际选择的加料（数量>0的）
+            const selectedAddons = [];
+            for(const addon in addonQuantities) {
+                if(addonQuantities[addon] > 0) {
+                    selectedAddons.push({
+                        name: addon,
+                        quantity: addonQuantities[addon],
+                        price: addonPrices[addon]
+                    });
+                }
+            }
+            
+            // 如果有选择加面
+            if(extraNoodleSelected) {
+                selectedAddons.push({
+                    name: "加面",
+                    quantity: 1,
+                    price: 1.00
+                });
+            }
+            
+            // 创建组合菜品名称
+            let itemName = selectedMainDish.name;
+            let totalPrice = selectedMainDish.price;
+            
+            // 添加加料信息
+            if(selectedAddons.length > 0) {
+                const addonTexts = selectedAddons.map(a => {
+                    return a.quantity > 1 ? `${a.name}×${a.quantity}` : a.name;
+                });
+                itemName += ` (加: ${addonTexts.join('+')})`;
+                totalPrice += selectedAddons.reduce((sum, a) => sum + (a.price * a.quantity), 0);
+            }
+            
+            // 添加到订单
+            currentOrder.push({
+                name: itemName,
+                price: totalPrice,
+                mainDish: selectedMainDish.name,
+                addons: selectedAddons,
+                quantity: 1
+            });
+            
+            updateOrderDisplay();
+            resetSelection();
+        }
+        
+        // 重置选择
+        function resetSelection() {
+            selectedMainDish = null;
+            resetAddonQuantities();
+            
+            // 清除主菜高亮显示
+            const mainDishes = document.querySelectorAll('#main-dishes .menu-item');
+            mainDishes.forEach(item => {
+                item.classList.remove('selected');
+            });
+        }
+        
+        // 更新订单显示
+        function updateOrderDisplay() {
+            let html = '';
+            let total = 0;
+            
+            currentOrder.forEach((item, index) => {
+                const itemTotal = item.price * (item.quantity || 1);
+                html += `
+                    <li>
+                        <div class="current-main-item">${item.name} ×${item.quantity || 1} - RM${itemTotal.toFixed(2)}</div>
+                        <button onclick="removeItem(${index})" style="padding: 2px 5px; background: #f44336; margin-left: 10px;">×</button>
+                    </li>
+                `;
+                total += itemTotal;
+            });
+            
+            document.getElementById('current-order').innerHTML = html || '<li>暂无菜品</li>';
+            document.getElementById('total').textContent = total.toFixed(2);
+        }
+        
+        // 移除单个菜品
+        function removeItem(index) {
+            currentOrder.splice(index, 1);
+            updateOrderDisplay();
+        }
+        
+        // 清空当前订单
+        function clearOrder() {
+            currentOrder = [];
+            updateOrderDisplay();
+        }
+        
+        // 提交订单
+        function submitOrder() {
+            if(!selectedTable) return alert('请选择桌号');
+            if(currentOrder.length === 0) return alert('请添加菜品');
+            
+            const total = parseFloat(document.getElementById('total').textContent);
+            const now = new Date();
+            const timeString = now.toLocaleString();
+            
+            // 创建新订单
+            const newOrder = {
+                id: Date.now(), // 使用时间戳作为唯一ID
+                table: selectedTable,
+                items: [...currentOrder],
+                total: total,
+                time: timeString,
+                status: 'preparing', // 默认状态为准备中
+                lastUpdated: now.getTime()
+            };
+            
+            // 保存到活动订单
+            activeOrders.unshift(newOrder);
+            saveActiveOrders();
+            
+            // 保存到完整订单数据
+            allOrders.push(newOrder);
+            saveAllOrders();
+            
+            // 更新统计数据
+            dailyStats.orderCount++;
+            dailyStats.revenue += total;
+            updateStats();
+            saveDailyStats();
+            
+            alert(`桌号 ${selectedTable} 订单已提交!\n总计: RM${total.toFixed(2)}`);
+            
+            // 清空当前订单
+            currentOrder = [];
+            updateOrderDisplay();
+        }
+        
+        // 更新统计显示
+        function updateStats() {
+            document.getElementById('order-count').textContent = dailyStats.orderCount;
+            document.getElementById('today-revenue').textContent = dailyStats.revenue.toFixed(2);
+        }
+        
+        // 重置当日数据
+        function resetDailyStats() {
+            if(confirm('确定要重置当日营业数据吗？所有数据将丢失！')) {
+                dailyStats = { orderCount: 0, revenue: 0 };
+                allOrders = [];
+                activeOrders = [];
+                updateStats();
+                saveDailyStats();
+                saveAllOrders();
+                saveActiveOrders();
+            }
+        }
+        
+        // 保存统计数据
+        function saveDailyStats() {
+            localStorage.setItem('dailyStats', JSON.stringify(dailyStats));
+        }
+        
+        // 加载统计数据
+        function loadDailyStats() {
+            const saved = localStorage.getItem('dailyStats');
+            if(saved) {
+                dailyStats = JSON.parse(saved);
+                updateStats();
+            }
+        }
+        
+        // 保存所有订单
+        function saveAllOrders() {
+            localStorage.setItem('allOrders', JSON.stringify(allOrders));
+        }
+        
+        // 加载所有订单
+        function loadAllOrders() {
+            const saved = localStorage.getItem('allOrders');
+            if(saved) {
+                allOrders = JSON.parse(saved);
+            }
+        }
+        
+        // 保存活动订单
+        function saveActiveOrders() {
+            localStorage.setItem('activeOrders', JSON.stringify(activeOrders));
+        }
+        
+        // 加载活动订单
+        function loadActiveOrders() {
+            const saved = localStorage.getItem('activeOrders');
+            if(saved) {
+                activeOrders = JSON.parse(saved);
+            }
+        }
+
+        // 导出Excel
+        function exportToExcel() {
+            if(allOrders.length === 0) {
+                alert("今日尚无订单数据");
+                return;
+            }
+            
+            // 创建Excel工作簿
+            const wb = XLSX.utils.book_new();
+            
+            // 准备订单数据
+            const today = new Date().toLocaleDateString();
+            
+            // 创建工作表数据
+            const wsData = [
+                ["桌号", "主菜", "加料", "数量", "单价(RM)", "小计(RM)", "时间"],
+                ...allOrders.flatMap(order => 
+                    order.items.map((item, i) => [
+                        i === 0 ? order.table : "",
+                        item.mainDish || item.name,
+                        item.addons ? item.addons.map(a => 
+                            a.quantity > 1 ? `${a.name}×${a.quantity}` : a.name
+                        ).join(', ') : '无',
+                        item.quantity || 1,
+                        item.price.toFixed(2),
+                        (item.price * (item.quantity || 1)).toFixed(2),
+                        i === 0 ? order.time : "",
+                    ])
+                )
+            ];
+            
+            // 添加汇总行
+            wsData.push(
+                [], 
+                ["总计", "", "", "", "", dailyStats.revenue.toFixed(2), "", ""]
+            );
+            
+            // 创建工作表
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            
+            // 设置列宽
+            ws['!cols'] = [
+                {wch: 8},  {wch: 20}, {wch: 20},
+                {wch: 8}, {wch: 6}, 
+                {wch: 8}, {wch: 20}, {wch: 10}
+            ];
+            
+            // 添加工作表到工作簿
+            XLSX.utils.book_append_sheet(wb, ws, "今日订单");
+            
+            // 导出Excel文件
+            XLSX.writeFile(wb, `沙巴鱼丸面_订单_${today}.xlsx`);
+        }
+    </script>
+</body>
+</html>
