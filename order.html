@@ -688,6 +688,12 @@
             // 导出Excel文件
             XLSX.writeFile(wb, `沙巴鱼丸面_订单_${today}.xlsx`);
         }
+        // 注册Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js');
+            });
+        }
     </script>
 </body>
 </html>
